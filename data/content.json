@@ -1,0 +1,30 @@
+{
+  "folders": [
+    {
+      "id": "vocabulary",
+      "type": "folder",
+      "name": "Vocabulary",
+      "children": [
+        {
+          "id": "vocab-1",
+          "type": "file",
+          "name": "Words: Family",
+          "content": "<h2>Family Vocabulary</h2><p>Learn the basic family words: father, mother, brother, sister.</p>"
+        }
+      ]
+    },
+    {
+      "id": "grammar",
+      "type": "folder",
+      "name": "Grammar",
+      "children": [
+        {
+          "id": "grammar-1",
+          "type": "file",
+          "name": "Present Simple",
+          "content": "<h2>Present Simple</h2><p>Use the present simple tense to talk about habits and routines.</p>"
+        }
+      ]
+    }
+  ]
+}

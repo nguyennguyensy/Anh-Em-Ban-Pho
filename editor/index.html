@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Learning - Editor</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-modal">
+      <h2>Đăng nhập Editor</h2>
+      <p>Nhập mật khẩu để truy cập phần chỉnh sửa:</p>
+      <input id="editor-password" type="password" placeholder="Mật khẩu" autocomplete="off" />
+      <button id="auth-submit" type="button" class="primary-button">Xác nhận</button>
+      <div id="auth-message" class="auth-message"></div>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div>
+      <h1>English Learning Editor</h1>
+      <p>Quản lý thư mục, nội dung và tạo bài học.</p>
+    </div>
+    <a class="secondary-button" href="../index.html">Quay về Reader</a>
+  </header>
+
+  <main class="app-grid">
+    <aside class="panel sidebar">
+      <div class="panel-title">Thư mục / File</div>
+      <div class="editor-actions">
+        <button id="add-folder-btn" class="secondary-button">Thêm folder</button>
+        <button id="add-file-btn" class="secondary-button">Thêm file</button>
+      </div>
+      <div id="editor-tree" class="folder-tree"></div>
+    </aside>
+
+    <section class="panel content-panel editor-panel">
+      <div class="panel-title editor-bar">
+        <div>
+          <span id="current-folder-name">Chưa chọn thư mục</span>
+        </div>
+        <div class="editor-buttons">
+          <button id="go-back-btn" class="secondary-button">Về trên</button>
+        </div>
+      </div>
+      <div id="editor-folder-content" class="editor-folder-content">
+        <div class="empty-state">Chọn một thư mục để xem file và folder bên trong.</div>
+      </div>
+    </section>
+  </main>
+
+  <input id="image-input" type="file" accept="image/*" hidden />
+  <input id="audio-input" type="file" accept="audio/*" hidden />
+  <template id="template-folder-item">
+    <div class="tree-item folder-item" data-id="">
+      <span class="item-icon">📁</span>
+      <span class="item-name"></span>
+      <div class="folder-actions">
+        <button class="tiny-button add-child">+</button>
+        <button class="tiny-button delete-item">×</button>
+      </div>
+    </div>
+  </template>
+  <template id="template-file-item-editor">
+    <div class="tree-item file-item" data-id="">
+      <span class="item-icon">📄</span>
+      <span class="item-name"></span>
+      <button class="tiny-button delete-item">×</button>
+    </div>
+  </template>
+
+  <script src="index.js"></script>
+</body>
+</html>

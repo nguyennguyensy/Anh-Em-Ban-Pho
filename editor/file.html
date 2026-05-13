@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Learning - Editor File</title>
+  <link rel="stylesheet" href="../styles.css" />
+</head>
+<body>
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-modal">
+      <h2>Đăng nhập Editor</h2>
+      <p>Nhập mật khẩu để truy cập phần chỉnh sửa:</p>
+      <input id="editor-password" type="password" placeholder="Mật khẩu" autocomplete="off" />
+      <button id="auth-submit" type="button" class="primary-button">Xác nhận</button>
+      <div id="auth-message" class="auth-message"></div>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div>
+      <h1>English Learning Editor</h1>
+      <p>Chỉnh sửa file bài học</p>
+    </div>
+    <a class="secondary-button" href="index.html">Quay về Editor</a>
+  </header>
+
+  <main class="app-grid">
+    <aside class="panel sidebar">
+      <div class="panel-title">Thư mục / File</div>
+      <div id="editor-file-tree" class="folder-tree"></div>
+    </aside>
+    <section class="panel content-panel editor-panel">
+      <div class="panel-title editor-bar">
+        <div>
+          <input id="file-name-input" class="file-name-input" placeholder="Tên file..." />
+        </div>
+        <div class="editor-buttons">
+          <button id="save-draft-btn" class="secondary-button">Save Draft</button>
+          <button id="post-btn" class="primary-button">Post</button>
+        </div>
+      </div>
+
+      <div id="editor-controls" class="editor-toolbar">
+        <select id="font-family" aria-label="Font family">
+          <option value="Arial">Arial</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Comic Sans MS">Comic Sans MS</option>
+        </select>
+        <input id="font-size" type="number" min="10" max="64" value="16" title="Text size" />
+        <button data-cmd="bold" class="toolbar-button">B</button>
+        <button data-cmd="italic" class="toolbar-button">I</button>
+        <button data-cmd="underline" class="toolbar-button">U</button>
+        <input id="text-color" type="color" title="Text colour" />
+        <input id="highlight-color" type="color" title="Highlight colour" />
+        <button data-cmd="justifyLeft" class="toolbar-button">L</button>
+        <button data-cmd="justifyCenter" class="toolbar-button">C</button>
+        <button data-cmd="justifyRight" class="toolbar-button">R</button>
+        <button data-cmd="justifyFull" class="toolbar-button">J</button>
+        <input id="line-height" type="number" min="1" max="3" step="0.1" value="1.5" title="Line height" />
+        <button id="insert-image-btn" class="secondary-button">Add picture</button>
+        <button id="insert-sound-btn" class="secondary-button">Add sound</button>
+        <button id="insert-blank-btn" class="secondary-button">Blankfield</button>
+        <button id="insert-mcq-btn" class="secondary-button">Multiple choice</button>
+      </div>
+
+      <div id="editor-shell" class="editor-shell">
+        <div id="editor-content" class="editor-content" contenteditable="true" spellcheck="false"></div>
+      </div>
+
+      <div class="editor-status-bar">
+        <div id="editor-message">Nhập nội dung và lưu draft. Post để cho reader xem.</div>
+      </div>
+    </section>
+  </main>
+
+  <input id="image-input" type="file" accept="image/*" hidden />
+  <input id="audio-input" type="file" accept="audio/*" hidden />
+  <script src="file.js"></script>
+</body>
+</html>

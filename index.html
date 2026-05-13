@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Learning - Reader</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>English Learning Reader</h1>
+      <p>Trang đọc bài giảng và bài tập tiếng Anh</p>
+    </div>
+    <a class="secondary-button" href="editor/index.html">Mở Editor</a>
+  </header>
+
+  <main class="app-grid">
+    <aside class="panel sidebar">
+      <div class="panel-title">Thư mục</div>
+      <div id="reader-tree" class="folder-tree"></div>
+    </aside>
+
+    <section class="panel content-panel">
+      <div class="panel-title">Nội dung thư mục</div>
+      <div id="reader-folder-content" class="reader-folder-content">
+        <div class="empty-state">Chọn một thư mục để xem file và folder bên trong.</div>
+      </div>
+    </section>
+  </main>
+
+  <template id="template-file-item">
+    <div class="tree-item file-item" data-id="">
+      <span class="item-icon">📄</span>
+      <span class="item-name"></span>
+    </div>
+  </template>
+
+  <script src="scripts.js"></script>
+</body>
+</html>
