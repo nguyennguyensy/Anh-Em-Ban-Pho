@@ -282,6 +282,14 @@ function enhanceReaderInteractions(root) {
       checkBtn.disabled = true;
     });
 
+    // Display feedback if already answered
+    if (responses[questionId]) {
+      const value = responses[questionId];
+      const isCorrect = value.toLowerCase() === correctValue.toLowerCase();
+      feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án: ${correctValue}`;
+      feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
+    }
+
     placeholder.append(input, checkBtn, feedback);
     blank.after(placeholder);
     blank.style.display = 'inline-flex';
@@ -294,38 +302,47 @@ function enhanceReaderInteractions(root) {
     mcq.dataset.id = questionId;
     mcq.classList.add('reader-mcq');
     const buttonNodes = Array.from(mcq.querySelectorAll('button')).filter((btn) => btn.dataset.option);
-    const stored = responses[questionId] || '';
-    buttonNodes.forEach((btn) => {
-      btn.classList.remove('selected');
-      btn.disabled = !!stored; // Disable if already answered
-    });
-    if (stored) {
-      buttonNodes.forEach((btn) => {
-        btn.classList.toggle('selected', btn.dataset.option === stored);
-      });
-    }
+    const feedback = document.createElement('div');
+    feedback.className = 'reader-feedback';
+    mcq.appendChild(feedback);
+    const checkBtn = document.createElement('button');
+    checkBtn.className = 'secondary-button';
+    checkBtn.textContent = 'Kiểm tra';
+    mcq.appendChild(checkBtn);
+
     buttonNodes.forEach((button) => {
       button.addEventListener('click', () => {
         if (responses[questionId]) return; // Prevent re-answer
-        const selected = button.dataset.option;
-        buttonNodes.forEach((btn) => {
-          btn.classList.remove('selected');
-          btn.disabled = true; // Disable all after selection
-        });
+        buttonNodes.forEach((btn) => btn.classList.remove('selected'));
         button.classList.add('selected');
-        const isCorrect = selected === correct;
-        responses[questionId] = selected;
-        localStorage.setItem(STORAGE_READER_RESPONSES, JSON.stringify(responses));
-        let feedback = mcq.querySelector('.reader-feedback');
-        if (!feedback) {
-          feedback = document.createElement('div');
-          feedback.className = 'reader-feedback';
-          mcq.appendChild(feedback);
-        }
-        feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án đúng: ${correct}`;
-        feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
       });
     });
+
+    checkBtn.addEventListener('click', () => {
+      if (responses[questionId]) return;
+      const selectedBtn = buttonNodes.find(btn => btn.classList.contains('selected'));
+      if (!selectedBtn) return; // No selection
+      const selected = selectedBtn.dataset.option;
+      const isCorrect = selected === correct;
+      responses[questionId] = selected;
+      localStorage.setItem(STORAGE_READER_RESPONSES, JSON.stringify(responses));
+      feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án đúng: ${correct}`;
+      feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
+      buttonNodes.forEach(btn => btn.disabled = true);
+      checkBtn.disabled = true;
+    });
+
+    const stored = responses[questionId] || '';
+    if (stored) {
+      buttonNodes.forEach((btn) => {
+        btn.classList.toggle('selected', btn.dataset.option === stored);
+        btn.disabled = true;
+      });
+      checkBtn.disabled = true;
+      const isCorrect = stored === correct;
+      feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án đúng: ${correct}`;
+      feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
+    }
   });
 }
 
