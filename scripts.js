@@ -32,6 +32,9 @@ const DEFAULT_CONTENT = {
   ]
 };
 
+const broadcastChannel = new BroadcastChannel('english-app-sync');
+
+
 function fetchBaseData() {
   return fetch(BASE_DATA_PATH)
     .then((res) => res.json())
@@ -314,6 +317,12 @@ function refreshPublishedViews() {
   if (document.getElementById('reader-tree')) initReaderPage();
   if (document.getElementById('viewer-content')) initViewerPage();
 }
+
+broadcastChannel.onmessage = (event) => {
+  if (event.data === 'published-updated') {
+    refreshPublishedViews();
+  }
+};
 
 window.addEventListener('storage', (event) => {
   if (event.key === STORAGE_PUBLISHED) {

@@ -9,6 +9,9 @@ const DEFAULT_CONTENT = {
   ]
 };
 
+const broadcastChannel = new BroadcastChannel('english-app-sync');
+
+
 let editorData = { folders: [] };
 let currentFileId = null;
 let currentFile = null;
@@ -61,8 +64,10 @@ function saveDraftData(message = 'Đã lưu draft') {
 function postContent() {
   saveCurrentFileContent();
   localStorage.setItem(STORAGE_PUBLISHED, JSON.stringify(editorData));
+  broadcastChannel.postMessage('published-updated');
   showEditorMessage('Nội dung đã được đăng. Reader có thể xem ngay.');
 }
+
 
 function showEditorMessage(text) {
   const message = document.getElementById('editor-message');
