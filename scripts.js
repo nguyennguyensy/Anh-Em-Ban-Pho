@@ -280,7 +280,10 @@ function enhanceReaderInteractions(root) {
     mcq.classList.add('reader-mcq');
     const buttonNodes = Array.from(mcq.querySelectorAll('button')).filter((btn) => btn.dataset.option);
     const stored = responses[questionId] || '';
-    buttonNodes.forEach((btn) => btn.classList.remove('selected'));
+    buttonNodes.forEach((btn) => {
+      btn.classList.remove('selected');
+      btn.disabled = !!stored; // Disable if already answered
+    });
     if (stored) {
       buttonNodes.forEach((btn) => {
         btn.classList.toggle('selected', btn.dataset.option === stored);
@@ -288,8 +291,12 @@ function enhanceReaderInteractions(root) {
     }
     buttonNodes.forEach((button) => {
       button.addEventListener('click', () => {
+        if (responses[questionId]) return; // Prevent re-answer
         const selected = button.dataset.option;
-        buttonNodes.forEach((btn) => btn.classList.remove('selected'));
+        buttonNodes.forEach((btn) => {
+          btn.classList.remove('selected');
+          btn.disabled = true; // Disable all after selection
+        });
         button.classList.add('selected');
         const isCorrect = selected === correct;
         responses[questionId] = selected;
