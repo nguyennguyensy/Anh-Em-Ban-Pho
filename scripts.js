@@ -233,6 +233,17 @@ function initViewerPage() {
     content.innerHTML = file.content || '<p>Nội dung trống.</p>';
     content.querySelectorAll('[contenteditable]').forEach((element) => element.removeAttribute('contenteditable'));
     enhanceReaderInteractions(content);
+
+    // Add reset button
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'primary-button';
+    resetBtn.textContent = 'Làm lại bài';
+    resetBtn.style.marginTop = '2rem';
+    resetBtn.addEventListener('click', () => {
+      localStorage.removeItem(STORAGE_READER_RESPONSES);
+      window.location.reload();
+    });
+    content.appendChild(resetBtn);
   });
 }
 
@@ -252,9 +263,11 @@ function enhanceReaderInteractions(root) {
     input.className = 'reader-blank-input';
     input.placeholder = 'Nhập đáp án...';
     input.value = responses[questionId] || '';
+    input.disabled = !!responses[questionId]; // Disable if already answered
     const checkBtn = document.createElement('button');
     checkBtn.className = 'secondary-button';
     checkBtn.textContent = 'Kiểm tra';
+    checkBtn.disabled = !!responses[questionId];
     const feedback = document.createElement('div');
     feedback.className = 'reader-feedback';
 
@@ -265,6 +278,8 @@ function enhanceReaderInteractions(root) {
       localStorage.setItem(STORAGE_READER_RESPONSES, JSON.stringify(responses));
       feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án: ${correctValue}`;
       feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
+      input.disabled = true;
+      checkBtn.disabled = true;
     });
 
     placeholder.append(input, checkBtn, feedback);
