@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updatedAt": "2026-05-15T00:00:00.000Z",
+  "updatedAt": "2026-05-17T08:24:41.223Z",
   "folders": [
     {
       "id": "vocabulary",
@@ -17,6 +17,18 @@
           "hasUnpublishedChanges": false,
           "createdAt": "2026-05-15T00:00:00.000Z",
           "updatedAt": "2026-05-15T00:00:00.000Z",
+          "assets": []
+        },
+        {
+          "id": "file-61bd6cd4-e9b4-4d9a-83ec-449dbb01bcb0",
+          "type": "file",
+          "name": "Family",
+          "status": "draft",
+          "content": "<p>Bắt đầu viết nội dung tại đây...</p>",
+          "publishedContent": "",
+          "hasUnpublishedChanges": false,
+          "createdAt": "2026-05-17T08:24:41.223Z",
+          "updatedAt": "2026-05-17T08:24:41.223Z",
           "assets": []
         }
       ]
