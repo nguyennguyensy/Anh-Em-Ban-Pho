@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updatedAt": "2026-05-17T08:24:41.223Z",
+  "updatedAt": "2026-05-17T08:25:47.262Z",
   "folders": [
     {
       "id": "vocabulary",
@@ -23,12 +23,12 @@
           "id": "file-61bd6cd4-e9b4-4d9a-83ec-449dbb01bcb0",
           "type": "file",
           "name": "Family",
-          "status": "draft",
-          "content": "<p>Bắt đầu viết nội dung tại đây...</p>",
-          "publishedContent": "",
+          "status": "published",
+          "content": "<p>Dad: Bố&nbsp;</p><p>Mom: mẹ&nbsp;</p><p>Husband: chồng</p><p>Wife: vợ</p><p><br></p><p>My mom is my dad's&nbsp;<span class=\"blankfield\" data-id=\"blank-rq3h2769\"><span class=\"blank-line\">____</span><span class=\"blank-answer\" contenteditable=\"true\" spellcheck=\"false\">wife</span></span></p>",
+          "publishedContent": "<p>Dad: Bố&nbsp;</p><p>Mom: mẹ&nbsp;</p><p>Husband: chồng</p><p>Wife: vợ</p><p><br></p><p>My mom is my dad's&nbsp;<span class=\"blankfield\" data-id=\"blank-rq3h2769\"><span class=\"blank-line\">____</span><span class=\"blank-answer\" contenteditable=\"true\" spellcheck=\"false\">wife</span></span></p>",
           "hasUnpublishedChanges": false,
           "createdAt": "2026-05-17T08:24:41.223Z",
-          "updatedAt": "2026-05-17T08:24:41.223Z",
+          "updatedAt": "2026-05-17T08:25:47.261Z",
           "assets": []
         }
       ]
