@@ -34,6 +34,7 @@
       <div class="panel-title editor-bar">
         <div>
           <input id="file-name-input" class="file-name-input" placeholder="Tên file..." />
+          <span id="file-status-label" class="status-tag">Draft</span>
         </div>
         <div class="editor-buttons">
           <button id="save-draft-btn" class="secondary-button">Save Draft</button>
@@ -51,8 +52,16 @@
         <button data-cmd="bold" class="toolbar-button">B</button>
         <button data-cmd="italic" class="toolbar-button">I</button>
         <button data-cmd="underline" class="toolbar-button">U</button>
-        <input id="text-color" type="color" title="Text colour" />
-        <input id="highlight-color" type="color" title="Highlight colour" />
+        <button data-cmd="superscript" class="toolbar-button" title="Superscript">xⁿ</button>
+        <button data-cmd="subscript" class="toolbar-button" title="Subscript">xₙ</button>
+        <div class="color-picker-group">
+          <button id="text-color-toggle" type="button" class="color-picker-button" title="Text color">A</button>
+          <div id="text-color-palette" class="color-palette popover"></div>
+        </div>
+        <div class="color-picker-group">
+          <button id="highlight-color-toggle" type="button" class="color-picker-button highlight" title="Highlight color">A</button>
+          <div id="highlight-color-palette" class="color-palette popover"></div>
+        </div>
         <button data-cmd="justifyLeft" class="toolbar-button">L</button>
         <button data-cmd="justifyCenter" class="toolbar-button">C</button>
         <button data-cmd="justifyRight" class="toolbar-button">R</button>
@@ -76,6 +85,8 @@
 
   <input id="image-input" type="file" accept="image/*" hidden />
   <input id="audio-input" type="file" accept="audio/*" hidden />
+  <script src="../site-config.js"></script>
+  <script src="../content-store.js"></script>
   <script src="file.js"></script>
 </body>
 </html>

@@ -33,39 +33,82 @@ function restoreSelectionRange() {
   selection.addRange(savedSelectionRange);
 }
 
+function keepSelectionForControl(control) {
+  if (!control) return;
+  control.addEventListener('mousedown', saveSelectionRange);
+  control.addEventListener('focus', saveSelectionRange);
+}
+
+function setupColorPalette(containerId, colors, applyFn) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  colors.forEach((color) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'color-swatch';
+    if (color === 'transparent') {
+      button.classList.add('none-swatch');
+      button.textContent = '×';
+      button.title = 'Remove highlight';
+    } else {
+      button.style.backgroundColor = color;
+    }
+    button.dataset.color = color;
+    button.addEventListener('mousedown', saveSelectionRange);
+    button.addEventListener('click', () => {
+      restoreSelectionRange();
+      applyFn(color);
+    });
+    container.appendChild(button);
+  });
+}
+
 function getQueryParam(name) {
   return new URLSearchParams(window.location.search).get(name);
 }
 
 function fetchBaseData() {
-  return fetch(BASE_DATA_PATH)
-    .then((res) => res.json())
-    .catch(() => Promise.resolve(DEFAULT_CONTENT));
+  return ContentStore.loadContent({ basePath: '../' });
 }
 
 function loadEditorData() {
-  const saved = localStorage.getItem(STORAGE_EDITOR_DRAFT);
-  if (saved) {
-    try {
-      return Promise.resolve(JSON.parse(saved));
-    } catch (err) {
-      return fetchBaseData();
-    }
+  return ContentStore.loadContent({ basePath: '../', editor: true });
+}
+
+async function saveDraftData(message = 'Đã lưu draft') {
+  saveCurrentFileContent();
+  if (currentFile) {
+    currentFile.status = currentFile.status || 'draft';
+    currentFile.hasUnpublishedChanges = currentFile.status === 'published';
   }
-  return fetchBaseData();
+  try {
+    const result = await ContentStore.saveContent(editorData, { mode: 'draft' });
+    editorData = result.data;
+    if (currentFileId) currentFile = findNodeById(editorData.folders, currentFileId);
+    showEditorMessage(result.universal ? result.message : `${message} ${result.message}`);
+  } catch (error) {
+    showEditorMessage(`Không lưu được draft: ${error.message}`);
+  }
 }
 
-function saveDraftData(message = 'Đã lưu draft') {
+async function postContent() {
   saveCurrentFileContent();
-  localStorage.setItem(STORAGE_EDITOR_DRAFT, JSON.stringify(editorData));
-  showEditorMessage(message);
-}
-
-function postContent() {
-  saveCurrentFileContent();
-  localStorage.setItem(STORAGE_PUBLISHED, JSON.stringify(editorData));
-  broadcastChannel.postMessage('published-updated');
-  showEditorMessage('Nội dung đã được đăng. Reader có thể xem ngay.');
+  if (currentFile) {
+    currentFile.status = 'published';
+    currentFile.publishedContent = currentFile.content;
+    currentFile.hasUnpublishedChanges = false;
+    currentFile.updatedAt = ContentStore.nowIso();
+  }
+  try {
+    const result = await ContentStore.saveContent(editorData, { mode: 'publish' });
+    editorData = result.data;
+    if (currentFileId) currentFile = findNodeById(editorData.folders, currentFileId);
+    broadcastChannel.postMessage('published-updated');
+    showEditorMessage(result.universal ? result.message : `Đã post local. ${result.message}`);
+  } catch (error) {
+    showEditorMessage(`Không post được: ${error.message}`);
+  }
 }
 
 
@@ -105,7 +148,8 @@ function createEditorFileTreeNode(node, parentEl) {
   const treeNode = document.createElement('div');
   treeNode.className = `tree-item ${node.type}-item`;
   const icon = node.type === 'folder' ? '📁' : '📄';
-  treeNode.innerHTML = `<span class="item-icon">${icon}</span><span class="item-name">${node.name}</span>`;
+  treeNode.innerHTML = `<span class="item-icon">${icon}</span><span class="item-name"></span>`;
+  treeNode.querySelector('.item-name').textContent = node.name;
   if (node.type === 'file') {
     treeNode.addEventListener('click', () => {
       if (node.id !== currentFileId) {
@@ -135,10 +179,16 @@ function createFileInFolder(folderId, name) {
   const folder = getFolderById(folderId);
   if (!folder) return null;
   const file = {
-    id: `file-${Math.random().toString(36).slice(2, 10)}`,
+    id: ContentStore.makeId('file'),
     type: 'file',
     name,
-    content: '<p>Bắt đầu viết nội dung tại đây...</p>'
+    status: 'draft',
+    content: '<p>Bắt đầu viết nội dung tại đây...</p>',
+    publishedContent: '',
+    hasUnpublishedChanges: false,
+    createdAt: ContentStore.nowIso(),
+    updatedAt: ContentStore.nowIso(),
+    assets: []
   };
   folder.children = folder.children || [];
   folder.children.push(file);
@@ -154,6 +204,13 @@ function setCurrentFile(fileId) {
   if (!currentFile) return;
   if (titleInput) titleInput.value = currentFile.name || '';
   if (content) content.innerHTML = currentFile.content || '<p>Bắt đầu viết nội dung.</p>';
+  const statusLabel = document.getElementById('file-status-label');
+  if (statusLabel) {
+    statusLabel.textContent = currentFile.status === 'published'
+      ? (currentFile.hasUnpublishedChanges ? 'Published + Draft' : 'Published')
+      : 'Draft';
+    statusLabel.className = `status-tag ${currentFile.status === 'published' ? 'published' : ''}`;
+  }
   renderEditorFileTree();
 }
 
@@ -163,6 +220,7 @@ function saveCurrentFileContent() {
   const titleInput = document.getElementById('file-name-input');
   if (titleInput) currentFile.name = titleInput.value || currentFile.name || 'New file';
   if (content) currentFile.content = content.innerHTML;
+  currentFile.updatedAt = ContentStore.nowIso();
 }
 
 function execCommand(command, value = null) {
@@ -174,15 +232,27 @@ function execCommand(command, value = null) {
 function insertImage(file) {
   const reader = new FileReader();
   reader.onload = () => {
+    const wrapper = document.createElement('span');
+    wrapper.className = 'image-wrapper';
+    wrapper.style.display = 'inline-block';
+    wrapper.style.resize = 'both';
+    wrapper.style.overflow = 'auto';
+    wrapper.style.maxWidth = '100%';
+    wrapper.style.minWidth = '120px';
+    wrapper.style.margin = '0.75rem 0';
+
     const img = document.createElement('img');
     img.src = reader.result;
     img.className = 'image-block';
     img.alt = 'Hình ảnh';
-    img.style.maxWidth = '100%';
-    img.style.resize = 'both';
-    img.style.overflow = 'auto';
+    img.draggable = false;
+    img.style.display = 'block';
+    img.style.width = '100%';
+    img.style.height = 'auto';
+
+    wrapper.appendChild(img);
     const range = window.getSelection().getRangeAt(0);
-    range.insertNode(img);
+    range.insertNode(wrapper);
   };
   reader.readAsDataURL(file);
 }
@@ -259,7 +329,14 @@ function applyLineHeight() {
   if (!range || range.collapsed) return;
   const span = document.createElement('span');
   span.style.lineHeight = value;
-  range.surroundContents(span);
+  try {
+    range.surroundContents(span);
+  } catch (e) {
+    // Fallback for partial selections
+    const contents = range.extractContents();
+    span.appendChild(contents);
+    range.insertNode(span);
+  }
 }
 
 function applyFontSize() {
@@ -270,7 +347,14 @@ function applyFontSize() {
   if (!range || range.collapsed) return;
   const span = document.createElement('span');
   span.style.fontSize = `${size}px`;
-  range.surroundContents(span);
+  try {
+    range.surroundContents(span);
+  } catch (e) {
+    // Fallback for partial selections
+    const contents = range.extractContents();
+    span.appendChild(contents);
+    range.insertNode(span);
+  }
 }
 
 function applyTextColor(color) {
@@ -286,18 +370,48 @@ function bindEditorToolbar() {
   document.getElementById('font-family').addEventListener('change', (event) => {
     execCommand('fontName', event.target.value);
   });
-  document.getElementById('font-size').addEventListener('change', applyFontSize);
+  const fontSizeInput = document.getElementById('font-size');
+  const lineHeightInput = document.getElementById('line-height');
+  keepSelectionForControl(fontSizeInput);
+  keepSelectionForControl(lineHeightInput);
+  fontSizeInput?.addEventListener('blur', applyFontSize);
+  fontSizeInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyFontSize();
+      event.target.blur();
+    }
+  });
+  lineHeightInput?.addEventListener('blur', applyLineHeight);
+  lineHeightInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyLineHeight();
+      event.target.blur();
+    }
+  });
   document.querySelectorAll('[data-cmd]').forEach((button) => {
     button.addEventListener('click', () => execCommand(button.dataset.cmd));
   });
-  document.getElementById('text-color').addEventListener('change', (event) => applyTextColor(event.target.value));
-  document.getElementById('highlight-color').addEventListener('change', (event) => applyHighlightColor(event.target.value));
-  document.getElementById('line-height').addEventListener('change', applyLineHeight);
+  setupColorPalette('text-color-palette', ['#000000', '#1f2937', '#4b5563', '#2563eb', '#059669', '#d97706', '#b91c1c', '#7c3aed'], applyTextColor);
+  setupColorPalette('highlight-color-palette', ['transparent', '#fde68a', '#fda4af', '#a5f3fc', '#bbf7d0', '#c7d2fe', '#fecdd3', '#facc15', '#fbcfe8'], applyHighlightColor);
 
   document.getElementById('insert-image-btn').addEventListener('click', () => document.getElementById('image-input').click());
   document.getElementById('insert-sound-btn').addEventListener('click', () => document.getElementById('audio-input').click());
   document.getElementById('insert-blank-btn').addEventListener('click', insertBlankfield);
   document.getElementById('insert-mcq-btn').addEventListener('click', insertMultipleChoice);
+
+  const editorContent = document.getElementById('editor-content');
+  editorContent?.addEventListener('keydown', (event) => {
+    if (event.key === '^') {
+      event.preventDefault();
+      execCommand('superscript');
+    }
+    if (event.key === '_') {
+      event.preventDefault();
+      execCommand('subscript');
+    }
+  });
 
   document.getElementById('image-input').addEventListener('change', (event) => {
     const file = event.target.files?.[0];
@@ -316,13 +430,15 @@ function bindEditorToolbar() {
 
 function bindEditorActions() {
   document.getElementById('save-draft-btn').addEventListener('click', () => {
-    saveDraftData('Đã lưu draft thành công.');
-    window.location.href = 'index.html';
+    saveDraftData('Đã lưu draft thành công.').then(() => {
+      window.location.href = 'index.html';
+    });
   });
   document.getElementById('post-btn').addEventListener('click', () => {
     if (confirm('Đăng bài sẽ cho reader xem. Tiếp tục?')) {
-      postContent();
-      window.location.href = 'index.html';
+      postContent().then(() => {
+        window.location.href = 'index.html';
+      });
     }
   });
 }
@@ -376,7 +492,7 @@ function loadFilePage() {
   bindEditorToolbar();
   bindEditorActions();
   loadEditorData().then((data) => {
-    editorData = data;
+    editorData = ContentStore.normalizeContent(data, false);
     if (!editorData.folders?.length) {
       editorData = DEFAULT_CONTENT;
     }

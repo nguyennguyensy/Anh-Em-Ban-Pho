@@ -36,9 +36,7 @@ const broadcastChannel = new BroadcastChannel('english-app-sync');
 
 
 function fetchBaseData() {
-  return fetch(BASE_DATA_PATH)
-    .then((res) => res.json())
-    .catch(() => Promise.resolve(DEFAULT_CONTENT));
+  return ContentStore.loadContent();
 }
 
 function parsePublishedData(raw) {
@@ -50,12 +48,7 @@ function parsePublishedData(raw) {
 }
 
 function getPublishedData() {
-  const stored = localStorage.getItem(STORAGE_PUBLISHED);
-  if (stored) {
-    const parsed = parsePublishedData(stored);
-    if (parsed) return Promise.resolve(parsed);
-  }
-  return fetchBaseData();
+  return fetchBaseData().then((data) => ContentStore.filterPublished(data));
 }
 
 function getQueryParam(name) {
@@ -89,7 +82,8 @@ function buildReaderTree(container, data) {
   data.folders.forEach((folder) => {
     const folderNode = document.createElement('div');
     folderNode.className = 'tree-item folder-item';
-    folderNode.innerHTML = `<span class="item-icon">📁</span><span class="item-name">${folder.name}</span>`;
+    folderNode.innerHTML = `<span class="item-icon">📁</span><span class="item-name"></span>`;
+    folderNode.querySelector('.item-name').textContent = folder.name;
     folderNode.addEventListener('click', () => renderReaderFolder(folder, data));
     container.appendChild(folderNode);
   });
@@ -104,7 +98,8 @@ function buildViewerTree(container, data, currentFileId) {
     if (node.type === 'folder') {
       const folderNode = document.createElement('div');
       folderNode.className = 'tree-item folder-item';
-      folderNode.innerHTML = `<span class="item-icon">📁</span><span class="item-name">${node.name}</span>`;
+      folderNode.innerHTML = `<span class="item-icon">📁</span><span class="item-name"></span>`;
+      folderNode.querySelector('.item-name').textContent = node.name;
       parentEl.appendChild(folderNode);
       const childList = document.createElement('div');
       childList.style.paddingLeft = '1rem';
@@ -119,9 +114,10 @@ function buildViewerTree(container, data, currentFileId) {
     fileNode.dataset.id = node.id;
     fileNode.innerHTML = `
       <span class="item-icon">📄</span>
-      <span class="item-name">${node.name}</span>
+      <span class="item-name"></span>
       <button type="button" class="secondary-button">Xem</button>
     `;
+    fileNode.querySelector('.item-name').textContent = node.name;
     const button = fileNode.querySelector('button');
     button.addEventListener('click', () => {
       if (window.location.pathname.endsWith('viewer.html')) {
@@ -170,12 +166,16 @@ function renderReaderFolder(folder, data) {
     folder.children.forEach((item) => {
       const entry = document.createElement('div');
       entry.className = 'browse-item';
-      entry.innerHTML = `
-        <div class="browse-item-left">
-          <span class="item-icon">${item.type === 'folder' ? '📁' : '📄'}</span>
-          <span class="item-name">${item.name}</span>
-        </div>
-      `;
+      const left = document.createElement('div');
+      left.className = 'browse-item-left';
+      const icon = document.createElement('span');
+      icon.className = 'item-icon';
+      icon.textContent = item.type === 'folder' ? '📁' : '📄';
+      const name = document.createElement('span');
+      name.className = 'item-name';
+      name.textContent = item.name;
+      left.append(icon, name);
+      entry.appendChild(left);
       if (item.type === 'folder') {
         const openBtn = document.createElement('button');
         openBtn.type = 'button';
@@ -204,12 +204,12 @@ function renderReaderFolder(folder, data) {
   content.append(breadcrumbs, title, list);
 }
 
-function renderReaderContent(html) {
+function renderReaderContent(html, fileId = 'reader') {
   const target = document.getElementById('reader-content');
   if (!target) return;
   target.innerHTML = html || '<p>File này chưa có nội dung.</p>';
   target.querySelectorAll('[contenteditable]').forEach((element) => element.removeAttribute('contenteditable'));
-  enhanceReaderInteractions(target);
+  enhanceReaderInteractions(target, fileId);
 }
 
 function initViewerPage() {
@@ -232,7 +232,7 @@ function initViewerPage() {
     if (fileName) fileName.textContent = file.name || 'File chưa có tên';
     content.innerHTML = file.content || '<p>Nội dung trống.</p>';
     content.querySelectorAll('[contenteditable]').forEach((element) => element.removeAttribute('contenteditable'));
-    enhanceReaderInteractions(content);
+    enhanceReaderInteractions(content, file.id);
 
     // Add reset button
     const resetBtn = document.createElement('button');
@@ -240,15 +240,16 @@ function initViewerPage() {
     resetBtn.textContent = 'Làm lại bài';
     resetBtn.style.marginTop = '2rem';
     resetBtn.addEventListener('click', () => {
-      localStorage.removeItem(STORAGE_READER_RESPONSES);
+      localStorage.removeItem(`${STORAGE_READER_RESPONSES}:${file.id}`);
       window.location.reload();
     });
     content.appendChild(resetBtn);
   });
 }
 
-function enhanceReaderInteractions(root) {
-  const responses = JSON.parse(localStorage.getItem(STORAGE_READER_RESPONSES) || '{}');
+function enhanceReaderInteractions(root, fileId = 'reader') {
+  const responseKey = `${STORAGE_READER_RESPONSES}:${fileId}`;
+  const responses = JSON.parse(localStorage.getItem(responseKey) || '{}');
 
   root.querySelectorAll('.blankfield').forEach((blank) => {
     const answerNode = blank.querySelector('.blank-answer');
@@ -275,7 +276,7 @@ function enhanceReaderInteractions(root) {
       const value = input.value.trim();
       const isCorrect = value.toLowerCase() === correctValue.toLowerCase();
       responses[questionId] = value;
-      localStorage.setItem(STORAGE_READER_RESPONSES, JSON.stringify(responses));
+      localStorage.setItem(responseKey, JSON.stringify(responses));
       feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án: ${correctValue}`;
       feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
       input.disabled = true;
@@ -304,11 +305,24 @@ function enhanceReaderInteractions(root) {
     const buttonNodes = Array.from(mcq.querySelectorAll('button')).filter((btn) => btn.dataset.option);
     const feedback = document.createElement('div');
     feedback.className = 'reader-feedback';
-    mcq.appendChild(feedback);
+    const controls = document.createElement('div');
+    controls.className = 'reader-check';
     const checkBtn = document.createElement('button');
     checkBtn.className = 'secondary-button';
     checkBtn.textContent = 'Kiểm tra';
-    mcq.appendChild(checkBtn);
+    controls.append(checkBtn, feedback);
+
+    const questionNode = mcq.querySelector('.mcq-question');
+    if (questionNode && questionNode.parentNode) {
+      const header = document.createElement('div');
+      header.className = 'reader-mcq-header';
+      questionNode.parentNode.insertBefore(header, questionNode);
+      header.appendChild(questionNode);
+      header.appendChild(controls);
+    } else {
+      const firstRow = mcq.querySelector('.mcq-row');
+      mcq.insertBefore(controls, firstRow || mcq.firstChild);
+    }
 
     buttonNodes.forEach((button) => {
       button.addEventListener('click', () => {
@@ -325,7 +339,7 @@ function enhanceReaderInteractions(root) {
       const selected = selectedBtn.dataset.option;
       const isCorrect = selected === correct;
       responses[questionId] = selected;
-      localStorage.setItem(STORAGE_READER_RESPONSES, JSON.stringify(responses));
+      localStorage.setItem(responseKey, JSON.stringify(responses));
       feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án đúng: ${correct}`;
       feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
       buttonNodes.forEach(btn => btn.disabled = true);

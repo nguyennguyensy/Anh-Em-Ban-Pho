@@ -12,26 +12,21 @@ let editorData = { folders: [] };
 let currentFolderId = null;
 
 function fetchBaseData() {
-  return fetch(BASE_DATA_PATH)
-    .then((res) => res.json())
-    .catch(() => Promise.resolve(DEFAULT_CONTENT));
+  return ContentStore.loadContent({ basePath: '../' });
 }
 
 function loadEditorData() {
-  const saved = localStorage.getItem(STORAGE_EDITOR_DRAFT);
-  if (saved) {
-    try {
-      return Promise.resolve(JSON.parse(saved));
-    } catch (err) {
-      return fetchBaseData();
-    }
-  }
-  return fetchBaseData();
+  return ContentStore.loadContent({ basePath: '../', editor: true });
 }
 
-function saveDraftData(message = 'Đã lưu draft') {
-  localStorage.setItem(STORAGE_EDITOR_DRAFT, JSON.stringify(editorData));
-  showEditorMessage(message);
+async function saveDraftData(message = 'Đã lưu draft') {
+  try {
+    const result = await ContentStore.saveContent(editorData, { mode: 'draft' });
+    editorData = result.data;
+    showEditorMessage(result.universal ? result.message : `${message} ${result.message}`);
+  } catch (error) {
+    showEditorMessage(`Không lưu được: ${error.message}`);
+  }
 }
 
 function showEditorMessage(text) {
@@ -78,7 +73,8 @@ function createFolderNode(folder) {
   const node = document.createElement('div');
   node.className = 'tree-item folder-item';
   node.dataset.id = folder.id;
-  node.innerHTML = `<span class="item-icon">📁</span><span class="item-name">${folder.name}</span>`;
+  node.innerHTML = `<span class="item-icon">📁</span><span class="item-name"></span>`;
+  node.querySelector('.item-name').textContent = folder.name;
   node.addEventListener('click', () => {
     openEditorFolder(folder.id);
   });
@@ -142,12 +138,24 @@ function renderEditorFolder(folder) {
     folder.children.forEach((item) => {
       const entry = document.createElement('div');
       entry.className = 'browse-item';
-      entry.innerHTML = `
-        <div class="browse-item-left">
-          <span class="item-icon">${item.type === 'folder' ? '📁' : '📄'}</span>
-          <span class="item-name">${item.name}</span>
-        </div>
-      `;
+      const left = document.createElement('div');
+      left.className = 'browse-item-left';
+      const icon = document.createElement('span');
+      icon.className = 'item-icon';
+      icon.textContent = item.type === 'folder' ? '📁' : '📄';
+      const name = document.createElement('span');
+      name.className = 'item-name';
+      name.textContent = item.name;
+      left.append(icon, name);
+      if (item.type === 'file') {
+        const status = document.createElement('span');
+        status.className = `status-tag ${item.status === 'published' ? 'published' : ''}`;
+        status.textContent = item.status === 'published'
+          ? (item.hasUnpublishedChanges ? 'Published + Draft' : 'Published')
+          : 'Draft';
+        left.appendChild(status);
+      }
+      entry.appendChild(left);
       const buttons = document.createElement('div');
       buttons.className = 'folder-item-actions';
 
@@ -168,6 +176,16 @@ function renderEditorFolder(folder) {
         });
         buttons.appendChild(editBtn);
       }
+
+      const renameBtn = document.createElement('button');
+      renameBtn.type = 'button';
+      renameBtn.className = 'secondary-button';
+      renameBtn.textContent = 'Đổi tên';
+      renameBtn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        renameNode(item.id);
+      });
+      buttons.appendChild(renameBtn);
 
       const deleteBtn = document.createElement('button');
       deleteBtn.type = 'button';
@@ -199,7 +217,7 @@ function addNewFolder() {
   if (!folderName) return;
   const targetFolder = getSelectedFolder();
   const newFolder = {
-    id: `folder-${Math.random().toString(36).slice(2, 10)}`,
+    id: ContentStore.makeId('folder'),
     type: 'folder',
     name: folderName,
     children: []
@@ -240,6 +258,18 @@ function removeNode(nodeId) {
   if (!current || current.id === nodeId) {
     currentFolderId = editorData.folders[0]?.id || null;
   }
+  renderEditorTree();
+  if (currentFolderId) openEditorFolder(currentFolderId);
+}
+
+function renameNode(nodeId) {
+  const node = findNodeById(editorData.folders, nodeId);
+  if (!node) return;
+  const nextName = prompt('Tên mới:', node.name);
+  if (!nextName || nextName.trim() === node.name) return;
+  node.name = nextName.trim();
+  if (node.type === 'file') node.updatedAt = ContentStore.nowIso();
+  saveDraftData('Đã đổi tên.');
   renderEditorTree();
   if (currentFolderId) openEditorFolder(currentFolderId);
 }
@@ -299,7 +329,7 @@ function loadEditorWorkspace() {
   });
 
   loadEditorData().then((data) => {
-    editorData = data;
+    editorData = ContentStore.normalizeContent(data, false);
     if (!editorData.folders?.length) {
       editorData = DEFAULT_CONTENT;
     }

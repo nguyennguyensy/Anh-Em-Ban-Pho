@@ -1,4 +1,6 @@
 {
+  "version": 2,
+  "updatedAt": "2026-05-15T00:00:00.000Z",
   "folders": [
     {
       "id": "vocabulary",
@@ -9,7 +11,13 @@
           "id": "vocab-1",
           "type": "file",
           "name": "Words: Family",
-          "content": "<h2>Family Vocabulary</h2><p>Learn the basic family words: father, mother, brother, sister.</p>"
+          "status": "published",
+          "content": "<h2>Family Vocabulary</h2><p>Learn the basic family words: father, mother, brother, sister.</p>",
+          "publishedContent": "<h2>Family Vocabulary</h2><p>Learn the basic family words: father, mother, brother, sister.</p>",
+          "hasUnpublishedChanges": false,
+          "createdAt": "2026-05-15T00:00:00.000Z",
+          "updatedAt": "2026-05-15T00:00:00.000Z",
+          "assets": []
         }
       ]
     },
@@ -22,7 +30,13 @@
           "id": "grammar-1",
           "type": "file",
           "name": "Present Simple",
-          "content": "<h2>Present Simple</h2><p>Use the present simple tense to talk about habits and routines.</p>"
+          "status": "published",
+          "content": "<h2>Present Simple</h2><p>Use the present simple tense to talk about habits and routines.</p>",
+          "publishedContent": "<h2>Present Simple</h2><p>Use the present simple tense to talk about habits and routines.</p>",
+          "hasUnpublishedChanges": false,
+          "createdAt": "2026-05-15T00:00:00.000Z",
+          "updatedAt": "2026-05-15T00:00:00.000Z",
+          "assets": []
         }
       ]
     }
