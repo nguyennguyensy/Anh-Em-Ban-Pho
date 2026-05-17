@@ -76,7 +76,7 @@ function loadEditorData() {
   return ContentStore.loadContent({ basePath: '../', editor: true });
 }
 
-async function saveDraftData(message = 'Đã lưu draft') {
+async function saveDraftData(message = 'Draft saved.') {
   saveCurrentFileContent();
   if (currentFile) {
     currentFile.status = currentFile.status || 'draft';
@@ -88,7 +88,7 @@ async function saveDraftData(message = 'Đã lưu draft') {
     if (currentFileId) currentFile = findNodeById(editorData.folders, currentFileId);
     showEditorMessage(result.universal ? result.message : `${message} ${result.message}`);
   } catch (error) {
-    showEditorMessage(`Không lưu được draft: ${error.message}`);
+    showEditorMessage(`Could not save draft: ${error.message}`);
   }
 }
 
@@ -105,9 +105,9 @@ async function postContent() {
     editorData = result.data;
     if (currentFileId) currentFile = findNodeById(editorData.folders, currentFileId);
     broadcastChannel.postMessage('published-updated');
-    showEditorMessage(result.universal ? result.message : `Đã post local. ${result.message}`);
+    showEditorMessage(result.universal ? result.message : `Posted locally. ${result.message}`);
   } catch (error) {
-    showEditorMessage(`Không post được: ${error.message}`);
+    showEditorMessage(`Could not post: ${error.message}`);
   }
 }
 
@@ -183,7 +183,7 @@ function createFileInFolder(folderId, name) {
     type: 'file',
     name,
     status: 'draft',
-    content: '<p>Bắt đầu viết nội dung tại đây...</p>',
+    content: '<p>Start writing content here...</p>',
     publishedContent: '',
     hasUnpublishedChanges: false,
     createdAt: ContentStore.nowIso(),
@@ -192,7 +192,7 @@ function createFileInFolder(folderId, name) {
   };
   folder.children = folder.children || [];
   folder.children.push(file);
-  saveDraftData('Đã tạo file mới.');
+  saveDraftData('New file created.');
   return file;
 }
 
@@ -203,7 +203,7 @@ function setCurrentFile(fileId) {
   const content = document.getElementById('editor-content');
   if (!currentFile) return;
   if (titleInput) titleInput.value = currentFile.name || '';
-  if (content) content.innerHTML = currentFile.content || '<p>Bắt đầu viết nội dung.</p>';
+  if (content) content.innerHTML = currentFile.content || '<p>Start writing content.</p>';
   const statusLabel = document.getElementById('file-status-label');
   if (statusLabel) {
     statusLabel.textContent = currentFile.status === 'published'
@@ -244,7 +244,7 @@ function insertImage(file) {
     const img = document.createElement('img');
     img.src = reader.result;
     img.className = 'image-block';
-    img.alt = 'Hình ảnh';
+    img.alt = 'Image';
     img.draggable = false;
     img.style.display = 'block';
     img.style.width = '100%';
@@ -272,7 +272,7 @@ function insertSound(file, type) {
       const button = document.createElement('button');
       button.className = 'audio-short';
       button.type = 'button';
-      button.textContent = '🔊 Play âm thanh ngắn';
+      button.textContent = '🔊 Play short audio';
       const audio = document.createElement('audio');
       audio.src = reader.result;
       button.addEventListener('click', () => audio.play());
@@ -301,15 +301,15 @@ function insertMultipleChoice() {
   container.dataset.id = mcqId;
   container.dataset.correct = 'A';
   container.innerHTML = `
-    <div><strong>Câu hỏi:</strong></div>
-    <div contenteditable="true" class="mcq-question">Nhập câu hỏi tại đây...</div>
+    <div><strong>Question:</strong></div>
+    <div contenteditable="true" class="mcq-question">Enter the question here...</div>
     <div class="mcq-row">
       <button type="button" class="muq-button selected" data-option="A">A</button>
       <button type="button" class="muq-button" data-option="B">B</button>
       <button type="button" class="muq-button" data-option="C">C</button>
       <button type="button" class="muq-button" data-option="D">D</button>
     </div>
-    <div class="mcq-note">Click một lần để chọn đáp án đúng.</div>
+    <div class="mcq-note">Click once to choose the correct answer.</div>
   `;
   container.querySelectorAll('.muq-button').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -421,7 +421,7 @@ function bindEditorToolbar() {
   document.getElementById('audio-input').addEventListener('change', (event) => {
     const file = event.target.files?.[0];
     if (file) {
-      const type = prompt('Nhập "long" cho sound có tua hoặc "short" cho sound ngắn:', 'long');
+      const type = prompt('Enter "long" for audio with controls or "short" for short audio:', 'long');
       insertSound(file, type === 'short' ? 'short' : 'long');
     }
     event.target.value = '';
@@ -430,12 +430,12 @@ function bindEditorToolbar() {
 
 function bindEditorActions() {
   document.getElementById('save-draft-btn').addEventListener('click', () => {
-    saveDraftData('Đã lưu draft thành công.').then(() => {
+    saveDraftData('Draft saved successfully.').then(() => {
       window.location.href = 'index.html';
     });
   });
   document.getElementById('post-btn').addEventListener('click', () => {
-    if (confirm('Đăng bài sẽ cho reader xem. Tiếp tục?')) {
+    if (confirm('Posting will make this file visible in the reader. Continue?')) {
       postContent().then(() => {
         window.location.href = 'index.html';
       });
@@ -469,7 +469,7 @@ function initFilePage() {
       loadFilePage();
       if (authMessage) authMessage.textContent = '';
     } else if (authMessage) {
-      authMessage.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+      authMessage.textContent = 'Incorrect password. Please try again.';
     }
   }
 
@@ -504,7 +504,7 @@ function loadFilePage() {
     if (fileId) {
       const file = findNodeById(editorData.folders, fileId);
       if (!file) {
-        alert('File không tồn tại. Quay lại editor.');
+        alert('File does not exist. Returning to the editor.');
         window.location.href = 'index.html';
         return;
       }
@@ -515,18 +515,18 @@ function loadFilePage() {
     if (folderId) {
       const folder = getFolderById(folderId);
       if (!folder) {
-        alert('Thư mục không tồn tại. Quay lại editor.');
+        alert('Folder does not exist. Returning to the editor.');
         window.location.href = 'index.html';
         return;
       }
-      const fileName = prompt('Tên file mới:', 'New file');
+      const fileName = prompt('New file name:', 'New file');
       if (!fileName) {
         window.location.href = 'index.html';
         return;
       }
       const file = createFileInFolder(folderId, fileName);
       if (!file) {
-        alert('Không thể tạo file mới.');
+        alert('Could not create a new file.');
         window.location.href = 'index.html';
         return;
       }
@@ -535,7 +535,7 @@ function loadFilePage() {
       return;
     }
 
-    alert('Không có file hoặc thư mục được chỉ định.');
+    alert('No file or folder was specified.');
     window.location.href = 'index.html';
   });
 }

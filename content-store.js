@@ -47,7 +47,7 @@ const ContentStore = (() => {
     const existing = sessionStorage.getItem(SESSION_GITHUB_TOKEN_KEY);
     if (existing) return existing;
 
-    const token = window.prompt('Nhập GitHub token có quyền Contents: Read and write cho repo này:') || '';
+    const token = window.prompt('Enter a GitHub token with Contents: Read and write permission for this repo:') || '';
     if (token) sessionStorage.setItem(SESSION_GITHUB_TOKEN_KEY, token);
     return token;
   }
@@ -139,11 +139,11 @@ const ContentStore = (() => {
   async function commitContentToGithub(content, mode) {
     const config = getGithubConfig();
     if (!config.owner || !config.repo || !config.path) {
-      throw new Error('Thiếu GITHUB_OWNER, GITHUB_REPO hoặc CONTENT_DATA_PATH trong site-config.js.');
+      throw new Error('Missing GITHUB_OWNER, GITHUB_REPO, or CONTENT_DATA_PATH in site-config.js.');
     }
 
     const token = getGithubToken();
-    if (!token) throw new Error('Chưa nhập GitHub token.');
+    if (!token) throw new Error('No GitHub token entered.');
 
     const current = await getGithubContentFile(config, token);
     const message = mode === 'publish'
@@ -190,14 +190,14 @@ const ContentStore = (() => {
       return {
         universal: false,
         data: normalized,
-        message: `Đã lưu local, chưa commit GitHub: ${error.message}`
+        message: `Saved locally, but not committed to GitHub: ${error.message}`
       };
     }
 
     return {
       universal: true,
       data: normalized,
-      message: mode === 'publish' ? 'Đã post và commit GitHub.' : 'Đã lưu draft và commit GitHub.'
+      message: mode === 'publish' ? 'Posted and committed to GitHub.' : 'Draft saved and committed to GitHub.'
     };
   }
 

@@ -115,7 +115,7 @@ function buildViewerTree(container, data, currentFileId) {
     fileNode.innerHTML = `
       <span class="item-icon">📄</span>
       <span class="item-name"></span>
-      <button type="button" class="secondary-button">Xem</button>
+      <button type="button" class="secondary-button">View</button>
     `;
     fileNode.querySelector('.item-name').textContent = node.name;
     const button = fileNode.querySelector('button');
@@ -160,7 +160,7 @@ function renderReaderFolder(folder, data) {
   if (!folder.children || !folder.children.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'Thư mục trống.';
+    empty.textContent = 'This folder is empty.';
     list.appendChild(empty);
   } else {
     folder.children.forEach((item) => {
@@ -180,14 +180,14 @@ function renderReaderFolder(folder, data) {
         const openBtn = document.createElement('button');
         openBtn.type = 'button';
         openBtn.className = 'secondary-button';
-        openBtn.textContent = 'Mở';
+        openBtn.textContent = 'Open';
         openBtn.addEventListener('click', () => renderReaderFolder(item, data));
         entry.appendChild(openBtn);
       } else {
         const openBtn = document.createElement('button');
         openBtn.type = 'button';
         openBtn.className = 'primary-button';
-        openBtn.textContent = 'Xem';
+        openBtn.textContent = 'View';
         openBtn.addEventListener('click', () => {
           window.location.href = `viewer.html?file=${encodeURIComponent(item.id)}`;
         });
@@ -207,7 +207,7 @@ function renderReaderFolder(folder, data) {
 function renderReaderContent(html, fileId = 'reader') {
   const target = document.getElementById('reader-content');
   if (!target) return;
-  target.innerHTML = html || '<p>File này chưa có nội dung.</p>';
+  target.innerHTML = html || '<p>This file has no content yet.</p>';
   target.querySelectorAll('[contenteditable]').forEach((element) => element.removeAttribute('contenteditable'));
   enhanceReaderInteractions(target, fileId);
 }
@@ -219,25 +219,24 @@ function initViewerPage() {
   const fileName = document.getElementById('viewer-file-name');
   const fileId = getQueryParam('file');
   if (!fileId) {
-    content.innerHTML = '<p>Không tìm thấy file.</p>';
+    content.innerHTML = '<p>File not found.</p>';
     return;
   }
   getPublishedData().then((data) => {
     if (tree) buildViewerTree(tree, data, fileId);
     const file = findNodeById(data.folders, fileId);
     if (!file) {
-      content.innerHTML = '<p>File không tồn tại hoặc chưa được đăng.</p>';
+      content.innerHTML = '<p>This file does not exist or has not been posted yet.</p>';
       return;
     }
-    if (fileName) fileName.textContent = file.name || 'File chưa có tên';
-    content.innerHTML = file.content || '<p>Nội dung trống.</p>';
+    if (fileName) fileName.textContent = file.name || 'Untitled file';
+    content.innerHTML = file.content || '<p>This file has no content yet.</p>';
     content.querySelectorAll('[contenteditable]').forEach((element) => element.removeAttribute('contenteditable'));
     enhanceReaderInteractions(content, file.id);
 
-    // Add reset button
     const resetBtn = document.createElement('button');
     resetBtn.className = 'primary-button';
-    resetBtn.textContent = 'Làm lại bài';
+    resetBtn.textContent = 'Reset answers';
     resetBtn.style.marginTop = '2rem';
     resetBtn.addEventListener('click', () => {
       localStorage.removeItem(`${STORAGE_READER_RESPONSES}:${file.id}`);
@@ -251,6 +250,20 @@ function enhanceReaderInteractions(root, fileId = 'reader') {
   const responseKey = `${STORAGE_READER_RESPONSES}:${fileId}`;
   const responses = JSON.parse(localStorage.getItem(responseKey) || '{}');
 
+  function normalizeStoredResponse(stored) {
+    if (!stored) return null;
+    if (typeof stored === 'string') return { value: stored, revealed: false };
+    return {
+      value: stored.value || '',
+      revealed: Boolean(stored.revealed)
+    };
+  }
+
+  function saveResponse(questionId, value, revealed = false) {
+    responses[questionId] = { value, revealed };
+    localStorage.setItem(responseKey, JSON.stringify(responses));
+  }
+
   root.querySelectorAll('.blankfield').forEach((blank) => {
     const answerNode = blank.querySelector('.blank-answer');
     const correctValue = answerNode ? answerNode.textContent.trim() : '';
@@ -262,33 +275,45 @@ function enhanceReaderInteractions(root, fileId = 'reader') {
     const input = document.createElement('input');
     input.type = 'text';
     input.className = 'reader-blank-input';
-    input.placeholder = 'Nhập đáp án...';
-    input.value = responses[questionId] || '';
-    input.disabled = !!responses[questionId]; // Disable if already answered
+    const stored = normalizeStoredResponse(responses[questionId]);
+    input.placeholder = 'Enter your answer...';
+    input.value = stored?.value || '';
+    input.disabled = Boolean(stored);
     const checkBtn = document.createElement('button');
     checkBtn.className = 'secondary-button';
-    checkBtn.textContent = 'Kiểm tra';
-    checkBtn.disabled = !!responses[questionId];
+    checkBtn.textContent = 'Check';
     const feedback = document.createElement('div');
     feedback.className = 'reader-feedback';
 
     checkBtn.addEventListener('click', () => {
+      const saved = normalizeStoredResponse(responses[questionId]);
+      if (saved) {
+        const wasCorrect = saved.value.trim().toLowerCase() === correctValue.toLowerCase();
+        if (!wasCorrect && !saved.revealed) {
+          saveResponse(questionId, saved.value, true);
+          feedback.textContent = `Answer: ${correctValue}`;
+          feedback.className = 'reader-feedback wrong';
+          checkBtn.disabled = true;
+        }
+        return;
+      }
       const value = input.value.trim();
       const isCorrect = value.toLowerCase() === correctValue.toLowerCase();
-      responses[questionId] = value;
-      localStorage.setItem(responseKey, JSON.stringify(responses));
-      feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án: ${correctValue}`;
+      saveResponse(questionId, value, false);
+      feedback.textContent = isCorrect ? 'Right' : 'Wrong';
       feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
       input.disabled = true;
-      checkBtn.disabled = true;
+      checkBtn.textContent = isCorrect ? 'Check' : 'See answer';
+      checkBtn.disabled = isCorrect;
     });
 
-    // Display feedback if already answered
-    if (responses[questionId]) {
-      const value = responses[questionId];
+    if (stored) {
+      const value = stored.value;
       const isCorrect = value.toLowerCase() === correctValue.toLowerCase();
-      feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án: ${correctValue}`;
+      feedback.textContent = stored.revealed && !isCorrect ? `Answer: ${correctValue}` : (isCorrect ? 'Right' : 'Wrong');
       feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
+      checkBtn.textContent = isCorrect || stored.revealed ? 'Check' : 'See answer';
+      checkBtn.disabled = isCorrect || stored.revealed;
     }
 
     placeholder.append(input, checkBtn, feedback);
@@ -309,7 +334,7 @@ function enhanceReaderInteractions(root, fileId = 'reader') {
     controls.className = 'reader-check';
     const checkBtn = document.createElement('button');
     checkBtn.className = 'secondary-button';
-    checkBtn.textContent = 'Kiểm tra';
+    checkBtn.textContent = 'Check';
     controls.append(checkBtn, feedback);
 
     const questionNode = mcq.querySelector('.mcq-question');
@@ -326,36 +351,47 @@ function enhanceReaderInteractions(root, fileId = 'reader') {
 
     buttonNodes.forEach((button) => {
       button.addEventListener('click', () => {
-        if (responses[questionId]) return; // Prevent re-answer
+        if (normalizeStoredResponse(responses[questionId])) return;
         buttonNodes.forEach((btn) => btn.classList.remove('selected'));
         button.classList.add('selected');
       });
     });
 
     checkBtn.addEventListener('click', () => {
-      if (responses[questionId]) return;
+      const saved = normalizeStoredResponse(responses[questionId]);
+      if (saved) {
+        const wasCorrect = saved.value === correct;
+        if (!wasCorrect && !saved.revealed) {
+          saveResponse(questionId, saved.value, true);
+          feedback.textContent = `Answer: ${correct}`;
+          feedback.className = 'reader-feedback wrong';
+          checkBtn.disabled = true;
+        }
+        return;
+      }
       const selectedBtn = buttonNodes.find(btn => btn.classList.contains('selected'));
-      if (!selectedBtn) return; // No selection
+      if (!selectedBtn) return;
       const selected = selectedBtn.dataset.option;
       const isCorrect = selected === correct;
-      responses[questionId] = selected;
-      localStorage.setItem(responseKey, JSON.stringify(responses));
-      feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án đúng: ${correct}`;
+      saveResponse(questionId, selected, false);
+      feedback.textContent = isCorrect ? 'Right' : 'Wrong';
       feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
       buttonNodes.forEach(btn => btn.disabled = true);
-      checkBtn.disabled = true;
+      checkBtn.textContent = isCorrect ? 'Check' : 'See answer';
+      checkBtn.disabled = isCorrect;
     });
 
-    const stored = responses[questionId] || '';
+    const stored = normalizeStoredResponse(responses[questionId]);
     if (stored) {
       buttonNodes.forEach((btn) => {
-        btn.classList.toggle('selected', btn.dataset.option === stored);
+        btn.classList.toggle('selected', btn.dataset.option === stored.value);
         btn.disabled = true;
       });
-      checkBtn.disabled = true;
-      const isCorrect = stored === correct;
-      feedback.textContent = isCorrect ? 'Đúng!' : `Sai. Đáp án đúng: ${correct}`;
+      const isCorrect = stored.value === correct;
+      feedback.textContent = stored.revealed && !isCorrect ? `Answer: ${correct}` : (isCorrect ? 'Right' : 'Wrong');
       feedback.className = isCorrect ? 'reader-feedback correct' : 'reader-feedback wrong';
+      checkBtn.textContent = isCorrect || stored.revealed ? 'Check' : 'See answer';
+      checkBtn.disabled = isCorrect || stored.revealed;
     }
   });
 }

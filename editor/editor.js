@@ -47,7 +47,7 @@ function loadEditorData() {
   return fetchBaseData();
 }
 
-function saveDraftData(message = 'Đã lưu draft') {
+function saveDraftData(message = 'Draft saved.') {
   saveCurrentFileContent();
   localStorage.setItem(STORAGE_EDITOR_DRAFT, JSON.stringify(editorData));
   showEditorMessage(message);
@@ -58,7 +58,7 @@ function postContent() {
   localStorage.setItem(STORAGE_PUBLISHED, JSON.stringify(editorData));
   document.getElementById('publish-status').textContent = 'Published';
   document.getElementById('publish-status').classList.add('published');
-  showEditorMessage('Nội dung đã được đăng. Reader có thể xem ngay.');
+  showEditorMessage('Content has been posted. The reader can see it now.');
 }
 
 function showEditorMessage(text) {
@@ -97,7 +97,7 @@ function getSelectedFolder() {
 function setCurrentFile(fileId) {
   if (!fileId) {
     currentFileId = null;
-    document.getElementById('current-file-name').textContent = 'Chưa chọn file';
+    document.getElementById('current-file-name').textContent = 'No file selected';
     document.getElementById('editor-content').innerHTML = '';
     return;
   }
@@ -106,7 +106,7 @@ function setCurrentFile(fileId) {
   const file = findNodeById(editorData.folders, fileId);
   if (!file) return;
   document.getElementById('current-file-name').textContent = file.name;
-  const content = file.content || '<p>Bắt đầu viết nội dung cho file này.</p>';
+  const content = file.content || '<p>Start writing content for this file.</p>';
   document.getElementById('editor-content').innerHTML = content;
 }
 
@@ -200,10 +200,10 @@ function removeNode(nodeId) {
   const index = list.findIndex((item) => item.id === nodeId);
   if (index === -1) return;
   if (!parent && (nodeId === 'vocabulary' || nodeId === 'grammar')) {
-    alert('Không thể xóa hai thư mục chính.');
+    alert('The two main folders cannot be deleted.');
     return;
   }
-  if (!confirm('Xác nhận xóa mục này?')) return;
+  if (!confirm('Delete this item?')) return;
   list.splice(index, 1);
   if (currentFileId === nodeId || selectedTreeId === nodeId) {
     currentFileId = null;
@@ -212,11 +212,11 @@ function removeNode(nodeId) {
     setCurrentFile(null);
   }
   renderEditorTree();
-  saveDraftData('Đã cập nhật thư mục.');
+  saveDraftData('Folder updated.');
 }
 
 function addNewFolder(isChild = false) {
-  const folderName = prompt('Tên thư mục mới:');
+  const folderName = prompt('New folder name:');
   if (!folderName) return;
   const targetFolder = isChild ? getSelectedFolder() : getSelectedFolder();
   const newFolder = {
@@ -232,27 +232,27 @@ function addNewFolder(isChild = false) {
     editorData.folders.push(newFolder);
   }
   renderEditorTree();
-  saveDraftData('Đã thêm thư mục mới.');
+  saveDraftData('New folder added.');
 }
 
 function addNewFile() {
-  const fileName = prompt('Tên file mới:');
+  const fileName = prompt('New file name:');
   if (!fileName) return;
   const targetFolder = getSelectedFolder();
   if (!targetFolder) {
-    alert('Vui lòng chọn một thư mục để thêm file.');
+    alert('Please select a folder before adding a file.');
     return;
   }
   const newFile = {
     id: generateId('file'),
     type: 'file',
     name: fileName,
-    content: '<p>Viết nội dung tại đây...</p>'
+    content: '<p>Write content here...</p>'
   };
   targetFolder.children = targetFolder.children || [];
   targetFolder.children.push(newFile);
   renderEditorTree();
-  saveDraftData('Đã thêm file mới.');
+  saveDraftData('New file added.');
 }
 
 function execCommand(command, value = null) {
@@ -266,7 +266,7 @@ function insertImage(file) {
     const img = document.createElement('img');
     img.src = reader.result;
     img.className = 'image-block';
-    img.alt = 'Hình ảnh';
+    img.alt = 'Image';
     img.style.maxWidth = '100%';
     img.style.resize = 'both';
     img.style.overflow = 'auto';
@@ -291,7 +291,7 @@ function insertSound(file, type) {
       const button = document.createElement('button');
       button.className = 'audio-short';
       button.type = 'button';
-      button.textContent = '🔊 Play âm thanh ngắn';
+      button.textContent = '🔊 Play short audio';
       const audio = document.createElement('audio');
       audio.src = reader.result;
       button.addEventListener('click', () => audio.play());
@@ -320,15 +320,15 @@ function insertMultipleChoice() {
   container.dataset.id = mcqId;
   container.dataset.correct = 'A';
   container.innerHTML = `
-    <div><strong>Câu hỏi:</strong></div>
-    <div contenteditable="true" class="mcq-question">Nhập câu hỏi tại đây...</div>
+    <div><strong>Question:</strong></div>
+    <div contenteditable="true" class="mcq-question">Enter the question here...</div>
     <div class="mcq-row">
       <button type="button" class="muq-button selected" data-option="A">A</button>
       <button type="button" class="muq-button" data-option="B">B</button>
       <button type="button" class="muq-button" data-option="C">C</button>
       <button type="button" class="muq-button" data-option="D">D</button>
     </div>
-    <div class="mcq-note">Click một lần để chọn đáp án đúng.</div>
+    <div class="mcq-note">Click once to choose the correct answer.</div>
   `;
   container.querySelectorAll('.muq-button').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -393,7 +393,7 @@ function bindEditorToolbar() {
   document.getElementById('audio-input').addEventListener('change', (event) => {
     const file = event.target.files?.[0];
     if (file) {
-      const type = prompt('Nhập "long" cho sound có tua hoặc "short" cho sound ngắn:', 'long');
+      const type = prompt('Enter "long" for audio with controls or "short" for short audio:', 'long');
       insertSound(file, type === 'short' ? 'short' : 'long');
     }
     event.target.value = '';
@@ -403,9 +403,9 @@ function bindEditorToolbar() {
 function bindEditorActions() {
   document.getElementById('add-folder-btn').addEventListener('click', () => addNewFolder(true));
   document.getElementById('add-file-btn').addEventListener('click', addNewFile);
-  document.getElementById('save-draft-btn').addEventListener('click', () => saveDraftData('Đã lưu draft thành công.'));
+  document.getElementById('save-draft-btn').addEventListener('click', () => saveDraftData('Draft saved successfully.'));
   document.getElementById('post-btn').addEventListener('click', () => {
-    if (confirm('Đăng bài sẽ cho reader xem. Tiếp tục?')) postContent();
+    if (confirm('Posting will make this file visible in the reader. Continue?')) postContent();
   });
 }
 
@@ -436,7 +436,7 @@ function initEditorPage() {
       loadEditorWorkspace();
       if (authMessage) authMessage.textContent = '';
     } else if (authMessage) {
-      authMessage.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+      authMessage.textContent = 'Incorrect password. Please try again.';
     }
   }
 

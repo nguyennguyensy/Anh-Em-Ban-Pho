@@ -3,37 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>English Learning - Editor File</title>
+  <title>Anh Em Bấn Phổ - Editor File</title>
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
   <div id="auth-overlay" class="auth-overlay">
     <div class="auth-modal">
-      <h2>Đăng nhập Editor</h2>
-      <p>Nhập mật khẩu để truy cập phần chỉnh sửa:</p>
-      <input id="editor-password" type="password" placeholder="Mật khẩu" autocomplete="off" />
-      <button id="auth-submit" type="button" class="primary-button">Xác nhận</button>
+      <h2>Editor Login</h2>
+      <p>Enter the password to access the editor:</p>
+      <input id="editor-password" type="password" placeholder="Password" autocomplete="off" />
+      <button id="auth-submit" type="button" class="primary-button">Confirm</button>
       <div id="auth-message" class="auth-message"></div>
     </div>
   </div>
 
   <header class="app-header">
     <div>
-      <h1>English Learning Editor</h1>
-      <p>Chỉnh sửa file bài học</p>
+      <h1>Anh Em Bấn Phổ Editor</h1>
+      <p>Edit lesson files</p>
     </div>
-    <a class="secondary-button" href="index.html">Quay về Editor</a>
+    <a class="secondary-button" href="index.html">Back to Editor</a>
   </header>
 
   <main class="app-grid">
     <aside class="panel sidebar">
-      <div class="panel-title">Thư mục / File</div>
+      <div class="panel-title">Folders / Files</div>
       <div id="editor-file-tree" class="folder-tree"></div>
     </aside>
     <section class="panel content-panel editor-panel">
       <div class="panel-title editor-bar">
         <div>
-          <input id="file-name-input" class="file-name-input" placeholder="Tên file..." />
+          <input id="file-name-input" class="file-name-input" placeholder="File name..." />
           <span id="file-status-label" class="status-tag">Draft</span>
         </div>
         <div class="editor-buttons">
@@ -69,7 +69,7 @@
         <input id="line-height" type="number" min="1" max="3" step="0.1" value="1.5" title="Line height" />
         <button id="insert-image-btn" class="secondary-button">Add picture</button>
         <button id="insert-sound-btn" class="secondary-button">Add sound</button>
-        <button id="insert-blank-btn" class="secondary-button">Blankfield</button>
+        <button id="insert-blank-btn" class="secondary-button">Blank field</button>
         <button id="insert-mcq-btn" class="secondary-button">Multiple choice</button>
       </div>
 
@@ -78,7 +78,7 @@
       </div>
 
       <div class="editor-status-bar">
-        <div id="editor-message">Nhập nội dung và lưu draft. Post để cho reader xem.</div>
+        <div id="editor-message">Enter content and save the draft. Post to make it visible in the reader.</div>
       </div>
     </section>
   </main>

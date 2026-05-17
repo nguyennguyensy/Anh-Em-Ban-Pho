@@ -3,34 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>English Learning - Editor</title>
+  <title>Anh Em Bấn Phổ - Editor</title>
   <link rel="stylesheet" href="../styles.css" />
 </head>
 <body>
   <div id="auth-overlay" class="auth-overlay">
     <div class="auth-modal">
-      <h2>Đăng nhập Editor</h2>
-      <p>Nhập mật khẩu để truy cập phần chỉnh sửa:</p>
-      <input id="editor-password" type="password" placeholder="Mật khẩu" autocomplete="off" />
-      <button id="auth-submit" type="button" class="primary-button">Xác nhận</button>
+      <h2>Editor Login</h2>
+      <p>Enter the password to access the editor:</p>
+      <input id="editor-password" type="password" placeholder="Password" autocomplete="off" />
+      <button id="auth-submit" type="button" class="primary-button">Confirm</button>
       <div id="auth-message" class="auth-message"></div>
     </div>
   </div>
 
   <header class="app-header">
     <div>
-      <h1>English Learning Editor</h1>
-      <p>Quản lý thư mục, nội dung và tạo bài học.</p>
+      <h1>Anh Em Bấn Phổ Editor</h1>
+      <p>Manage folders, content, and lessons.</p>
     </div>
-    <a class="secondary-button" href="../index.html">Quay về Reader</a>
+    <a class="secondary-button" href="../index.html">Back to Reader</a>
   </header>
 
   <main class="app-grid">
     <aside class="panel sidebar">
-      <div class="panel-title">Thư mục / File</div>
+      <div class="panel-title">Folders / Files</div>
       <div class="editor-actions">
-        <button id="add-folder-btn" class="secondary-button">Thêm folder</button>
-        <button id="add-file-btn" class="secondary-button">Thêm file</button>
+        <button id="add-folder-btn" class="secondary-button">Add folder</button>
+        <button id="add-file-btn" class="secondary-button">Add file</button>
       </div>
       <div id="editor-tree" class="folder-tree"></div>
     </aside>
@@ -38,17 +38,17 @@
     <section class="panel content-panel editor-panel">
       <div class="panel-title editor-bar">
         <div>
-          <span id="current-folder-name">Chưa chọn thư mục</span>
+          <span id="current-folder-name">No folder selected</span>
         </div>
         <div class="editor-buttons">
-          <button id="go-back-btn" class="secondary-button">Về trên</button>
+          <button id="go-back-btn" class="secondary-button">Up one level</button>
         </div>
       </div>
       <div id="editor-folder-content" class="editor-folder-content">
-        <div class="empty-state">Chọn một thư mục để xem file và folder bên trong.</div>
+        <div class="empty-state">Select a folder to view its files and subfolders.</div>
       </div>
       <div class="editor-status-bar">
-        <div id="editor-message">Editor sẽ hỏi GitHub token khi Save Draft hoặc Post.</div>
+        <div id="editor-message">The editor will ask for a GitHub token when you Save Draft or Post.</div>
       </div>
     </section>
   </main>

@@ -19,13 +19,13 @@ function loadEditorData() {
   return ContentStore.loadContent({ basePath: '../', editor: true });
 }
 
-async function saveDraftData(message = 'Đã lưu draft') {
+async function saveDraftData(message = 'Draft saved.') {
   try {
     const result = await ContentStore.saveContent(editorData, { mode: 'draft' });
     editorData = result.data;
     showEditorMessage(result.universal ? result.message : `${message} ${result.message}`);
   } catch (error) {
-    showEditorMessage(`Không lưu được: ${error.message}`);
+    showEditorMessage(`Could not save: ${error.message}`);
   }
 }
 
@@ -93,7 +93,7 @@ function renderEditorFolder(folder) {
   const content = document.getElementById('editor-folder-content');
   const title = document.getElementById('current-folder-name');
   if (!content || !title) return;
-  title.textContent = folder ? folder.name : 'Chưa chọn thư mục';
+  title.textContent = folder ? folder.name : 'No folder selected';
   const parent = findParentForId(editorData.folders, folder?.id);
   const breadcrumbs = document.createElement('div');
   breadcrumbs.className = 'folder-breadcrumb';
@@ -132,7 +132,7 @@ function renderEditorFolder(folder) {
   if (!folder || !folder.children || !folder.children.length) {
     const empty = document.createElement('div');
     empty.className = 'empty-state';
-    empty.textContent = 'Thư mục trống.';
+    empty.textContent = 'This folder is empty.';
     list.appendChild(empty);
   } else {
     folder.children.forEach((item) => {
@@ -163,14 +163,14 @@ function renderEditorFolder(folder) {
         const openBtn = document.createElement('button');
         openBtn.type = 'button';
         openBtn.className = 'secondary-button';
-        openBtn.textContent = 'Mở';
+        openBtn.textContent = 'Open';
         openBtn.addEventListener('click', () => openEditorFolder(item.id));
         buttons.appendChild(openBtn);
       } else {
         const editBtn = document.createElement('button');
         editBtn.type = 'button';
         editBtn.className = 'primary-button';
-        editBtn.textContent = 'Chỉnh sửa';
+        editBtn.textContent = 'Edit';
         editBtn.addEventListener('click', () => {
           window.location.href = `file.html?file=${encodeURIComponent(item.id)}`;
         });
@@ -180,7 +180,7 @@ function renderEditorFolder(folder) {
       const renameBtn = document.createElement('button');
       renameBtn.type = 'button';
       renameBtn.className = 'secondary-button';
-      renameBtn.textContent = 'Đổi tên';
+      renameBtn.textContent = 'Rename';
       renameBtn.addEventListener('click', (event) => {
         event.stopPropagation();
         renameNode(item.id);
@@ -213,7 +213,7 @@ function openEditorFolder(folderId) {
 }
 
 function addNewFolder() {
-  const folderName = prompt('Tên thư mục mới:');
+  const folderName = prompt('New folder name:');
   if (!folderName) return;
   const targetFolder = getSelectedFolder();
   const newFolder = {
@@ -228,7 +228,7 @@ function addNewFolder() {
   } else {
     editorData.folders.push(newFolder);
   }
-  saveDraftData('Đã thêm folder mới.');
+  saveDraftData('New folder added.');
   renderEditorTree();
   if (targetFolder) openEditorFolder(targetFolder.id);
 }
@@ -236,7 +236,7 @@ function addNewFolder() {
 function addNewFile() {
   const target = getSelectedFolder();
   if (!target) {
-    alert('Vui lòng chọn một thư mục để thêm file.');
+    alert('Please select a folder before adding a file.');
     return;
   }
   window.location.href = `file.html?folder=${encodeURIComponent(target.id)}`;
@@ -248,12 +248,12 @@ function removeNode(nodeId) {
   const index = list.findIndex((item) => item.id === nodeId);
   if (index === -1) return;
   if (!parent && (nodeId === 'vocabulary' || nodeId === 'grammar')) {
-    alert('Không thể xóa hai thư mục chính.');
+    alert('The two main folders cannot be deleted.');
     return;
   }
-  if (!confirm('Xác nhận xóa mục này?')) return;
+  if (!confirm('Delete this item?')) return;
   list.splice(index, 1);
-  saveDraftData('Đã xóa mục.');
+  saveDraftData('Item deleted.');
   const current = getSelectedFolder();
   if (!current || current.id === nodeId) {
     currentFolderId = editorData.folders[0]?.id || null;
@@ -265,11 +265,11 @@ function removeNode(nodeId) {
 function renameNode(nodeId) {
   const node = findNodeById(editorData.folders, nodeId);
   if (!node) return;
-  const nextName = prompt('Tên mới:', node.name);
+  const nextName = prompt('New name:', node.name);
   if (!nextName || nextName.trim() === node.name) return;
   node.name = nextName.trim();
   if (node.type === 'file') node.updatedAt = ContentStore.nowIso();
-  saveDraftData('Đã đổi tên.');
+  saveDraftData('Renamed.');
   renderEditorTree();
   if (currentFolderId) openEditorFolder(currentFolderId);
 }
@@ -300,7 +300,7 @@ function initEditorPage() {
       loadEditorWorkspace();
       if (authMessage) authMessage.textContent = '';
     } else if (authMessage) {
-      authMessage.textContent = 'Mật khẩu không đúng. Vui lòng thử lại.';
+      authMessage.textContent = 'Incorrect password. Please try again.';
     }
   }
 
